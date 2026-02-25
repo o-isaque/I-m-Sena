@@ -1,27 +1,28 @@
-import Link from 'next/link';
-import { getAllProjects } from '@/lib/mdx';
+// app/projetos/[slug]/page.tsx
+import { getProjectBySlug } from '@/lib/mdx'; 
+import { MDXRemote } from 'next-mdx-remote/rsc';
 
-export default function HomePage() {
-  const projects = getAllProjects();
+// 1. Defina a interface para garantir que o TypeScript entenda que params é uma Promise
+interface PageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export default async function ProjectPage({ params }: PageProps) {
+  // 2. Você PRECISA dar await aqui para "esperar" o slug chegar da URL
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug;
+
+  // 3. Agora que o slug é uma string real, chamamos a função sem erro
+  const { content, meta } = getProjectBySlug(slug);
 
   return (
-    <main className="max-w-3xl mx-auto p-10">
-      <h1 className="text-4xl font-bold mb-6">Projetos & Aprendizados</h1>
-      <ul className="space-y-4">
-        {projects.map((project) => (
-          <li key={project.slug} className="border rounded-lg p-4 hover:shadow-md transition">
-            <Link href={`/projetos/${project.slug}`} className="block">
-              <h2 className="text-2xl font-semibold">{project.meta.title}</h2>
-              {project.meta.description && (
-                <p className="text-gray-600 mt-1">{project.meta.description}</p>
-              )}
-              {project.meta.date && (
-                <p className="text-gray-400 text-sm mt-2">{project.meta.date}</p>
-              )}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </main>
+    <article className="max-w-3xl mx-auto p-10 prose lg:prose-xl">
+      <header className="mb-8">
+        <h1 className="text-4xl font-bold">{meta.title}</h1>
+        <p className="text-gray-500">{meta.date}</p>
+      </header>
+      
+      <MDXRemote source={content} />
+    </article>
   );
 }
